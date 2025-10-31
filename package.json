@@ -1,0 +1,21 @@
+{
+  "name": "rs-node-file-manager",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dusixx/rs-node-file-manager.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/dusixx/rs-node-file-manager/issues"
+  },
+  "homepage": "https://github.com/dusixx/rs-node-file-manager#readme"
+}
