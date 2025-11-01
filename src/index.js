@@ -1,3 +1,6 @@
-import { parseArgs } from "./utils/parse-args.js";
+import { Interpreter } from "./interpreter/interpreter.js";
+import { parseArgs } from "./utils/index.js";
 
-console.log(parseArgs());
+const { username } = parseArgs();
+
+new Interpreter({ username }).run();
