@@ -75,7 +75,7 @@ export const evaluate = async (line) => {
   let nestedCmdName;
 
   if (isObj(cmd)) {
-    nestedCmdName = args[0].replace(/^--/, '');
+    nestedCmdName = args[0]?.replace(/^--/, '') ?? '';
     args = args.slice(1);
     cmd = cmd[nestedCmdName];
   }
