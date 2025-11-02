@@ -32,3 +32,14 @@ export const getHash = async (filePath, algorithm = 'sha256') => {
 export const getSHA256 = async (filePath) => {
   return await getHash(filePath, "sha256");
 }
+
+export class CustomError extends Error {
+  /**
+   * @param {string} msg 
+   * @param {string} details 
+   */
+  constructor(msg, details) {
+    super(msg);
+    this.details = details;
+  }
+}

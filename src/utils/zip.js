@@ -3,6 +3,7 @@ import path from 'path';
 import streamPromises from 'stream/promises';
 import zlib from 'zlib';
 import { checkPath, createDir, isFileExists, removeDir, resolvePath } from './fs.js';
+import { CustomError } from './misc.js';
 
 const MethodExtensionMap = {
   BrotliCompress: '.br',
@@ -23,12 +24,12 @@ const validatePaths = async (srcFile, dstFile) => {
   dstFile = resolvePath(dstFile);
 
   if (!await isFileExists(srcFile)) {
-    throw Error(`no such file: ${srcFile}`);
+    throw new CustomError('no such file', srcFile);
   }
   const dstDir = path.dirname(dstFile);
   const dstInfo = await checkPath(dstDir);
   if (dstInfo.isFile) {
-    throw Error(`not a directory: ${dstDir}`);
+    throw new CustomError('not a directory', dstDir);
   }
   // create if does not exists
   if (!dstInfo.exists) {
