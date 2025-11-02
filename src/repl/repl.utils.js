@@ -1,6 +1,6 @@
 import { styleText as style } from 'util';
 import { isArray, isFunc, isNonEmptyStr, isObj } from "../utils/index.js";
-import { CommandList } from './commands.js';
+import { CommandList } from './cmd-list.js';
 
 const HINT = style('gray',
   `If argument contains spaces, enclose it in double quotes (eg., cd "c:/program files")`
@@ -38,7 +38,7 @@ const evalCommand = async (cmd, args, cmdName) => {
       console[isArray(output) ? 'table' : 'log'](output);
     }
   } catch (err) {
-    showError('operation', err.message);
+    showError('operation', err.message.replace(/,\s+/g, '\n'));
   }
 }
 

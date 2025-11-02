@@ -1,6 +1,10 @@
 import fs, { Dirent } from "fs";
 import path from "path";
 
+/**
+ * @param {string} path 
+ * @param {string} mode 
+ */
 const checkAccess = async (path, mode) => {
   try {
     await fs.promises.access(path, mode);

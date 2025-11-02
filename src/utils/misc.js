@@ -13,8 +13,9 @@ export const isArray = v => Array.isArray(v);
 export const isObj = v => typeName(v) === 'object';
 
 /**
+ * @typedef {'sha256'|'sha512'|'sha3-256'|'sha3-512'|'md5'|'sha1'} Algorithm
  * @param {string} filePath 
- * @param {'sha256'|'sha512'|'sha3-256'|'sha3-512'|'md5'|'sha1'} algorithm 
+ * @param {Algorithm} algorithm 
  */
 export const getHash = async (filePath, algorithm = 'sha256') => {
   const src = resolvePath(filePath);

@@ -25,7 +25,7 @@ const getCPUs = () => {
 }
 
 export const CommandList = {
-  homedir: () => process.chdir(resolvePath(os.homedir())),
+  home: () => process.chdir(resolvePath(os.homedir())),
   cls: () => console.clear(),
   cd: (path) => {
     path = path === '?' ? import.meta.dirname + '/..' : path;

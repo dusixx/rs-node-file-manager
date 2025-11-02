@@ -5,9 +5,10 @@ import zlib from 'zlib';
 import { checkPath, createDir, resolvePath } from './fs.js';
 
 /**
+ * @typedef {'Gzip'|'Gunzip'|'BrotliCompress'|'BrotliDecompress'|'ZstdCompress'|'ZstdDecompress'} ActionType
  * @param {string} src 
  * @param {string} dst 
- * @param {{ action: 'Gzip'|'Gunzip'|'BrotliCompress'|'BrotliDecompress', deleteSource: boolean }} options
+ * @param {{ action: ActionType, deleteSource: boolean }} options
  */
 export const compressDecompressFile = async (srcFile, dstFile, { action, deleteSource = true } = {}) => {
   let justCreated = false;
@@ -41,7 +42,7 @@ export const compressDecompressFile = async (srcFile, dstFile, { action, deleteS
   } catch (err) {
     // clean up if failed
     if (justCreated) {
-      await removeDir(dstDir);;
+      await removeDir(dstDir);
     }
     throw err;
   }
