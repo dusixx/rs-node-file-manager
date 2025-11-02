@@ -4,10 +4,13 @@ import streamPromises from 'stream/promises';
 import zlib from 'zlib';
 import { checkPath, createDir, isFileExists, removeDir, resolvePath } from './fs.js';
 
-const FileExtension = {
+const MethodExtensionMap = {
   BrotliCompress: '.br',
+  BrotliDecompress: '',
   ZstdCompress: '.zst',
-  Gzip: '.gz'
+  ZstdDecompress: '.zst',
+  Gzip: '.gz',
+  Gunzip: '',
 }
 
 /**
@@ -36,7 +39,7 @@ const validatePaths = async (srcFile, dstFile) => {
 }
 
 /**
- * @typedef {'Gzip'|'Gunzip'|'BrotliCompress'|'BrotliDecompress'|'ZstdCompress'|'ZstdDecompress'} CompressionMethod
+ * @typedef {keyof typeof MethodExtensionMap} CompressionMethod
  * @typedef {{ method: CompressionMethod, deleteSource: boolean, appendExtension: boolean }} CompressionOptions
  * @param {string} srcFilePath
  * @param {string} dstFilePath
@@ -47,11 +50,14 @@ export const compressDecompressFile = async (srcFilePath, dstFilePath, {
   deleteSource = true,
   appendExtension = true
 } = {}) => {
+  if (!Object.hasOwn(MethodExtensionMap, method)) {
+    throw Error(`unsupported method: ${method}`);
+  }
   let { wasDstDirJustCreated, srcFile, dstFile, dstDir } = await validatePaths(srcFilePath, dstFilePath);
 
   // append ext for compressed file if needed
   if (appendExtension) {
-    const ext = FileExtension[method];
+    const ext = MethodExtensionMap[method];
     if (path.extname(dstFile) !== ext) {
       dstFile += ext ?? '';
     }
@@ -72,8 +78,10 @@ export const compressDecompressFile = async (srcFilePath, dstFilePath, {
     if (wasDstDirJustCreated) {
       await removeDir(dstDir);
     } else {
-      writeStream?.on('open', async () => {
-        await fs.promises.unlink(dstFile);
+      writeStream?.on('error', async () => {
+        if (dstFile !== srcFile) {
+          await fs.promises.unlink(dstFile);
+        }
       });
     }
     throw err;

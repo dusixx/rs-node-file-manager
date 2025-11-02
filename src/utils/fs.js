@@ -133,9 +133,18 @@ export const printFileContents = async (path) => {
 /**
  * @param {string} path 
  */
-export const createFile = async (path) => {
+export const createEmptyFile = async (filePath, recursive = true) => {
   let handle;
-  const src = resolvePath(path);
+  const src = resolvePath(filePath);
+
+  if (recursive) {
+    const srcDir = path.dirname(src);
+    const srcInfo = await checkPath(srcDir);
+    // create if does not exists
+    if (!srcInfo.exists) {
+      await createDir(srcDir);
+    }
+  }
   try {
     handle = await fs.promises.open(src, 'wx');
   } finally {
