@@ -1,13 +1,15 @@
+import os from 'os';
 import { styleText as style } from 'util';
 
 export const DefaultProps = {
   Prompt: '# ',
   Username: 'anonymous',
   ExitCmd: '.exit',
+  WorkingDir: os.homedir()
 }
 export const salutation = (username = DefaultProps.Username) => {
   return style("cyan", `\nWelcome to the File Manager, ${username}`
-    + `\nType "${DefaultProps.ExitCmd}" or use "CTRL+C" to finish`
+    + `\nEnter "${DefaultProps.ExitCmd}" or use "CTRL+C" to finish`
   );
 }
 export const farewell = (username = DefaultProps.Username) => {

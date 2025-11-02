@@ -1,7 +1,7 @@
 import { EOL } from "os";
 import { chdir, cwd, stdin, stdout } from "process";
 import readline from "readline";
-import { isFunc, isNonEmptyStr, isStr } from "../utils/index.js";
+import { isFunc, isNonEmptyStr } from "../utils/index.js";
 import { currentlyIn, DefaultProps, farewell, salutation } from "./cli.utils.js";
 
 export class CLI {
@@ -14,12 +14,13 @@ export class CLI {
   #onClose;
   #closed = true;
 
-  constructor({ username, prompt } = {}) {
+  constructor({ username, prompt, workingDir = DefaultProps.WorkingDir } = {}) {
     if (CLI.#instance) {
       return CLI.#instance;
     }
     this.username = username;
     this.prompt = prompt;
+    this.workingDirectory = workingDir;
     CLI.#instance = this;
   }
 
@@ -81,7 +82,7 @@ export class CLI {
   }
 
   set prompt(s) {
-    this.#prompt = isStr(s) ? s : DefaultProps.Prompt;
+    this.#prompt = s != null ? s : DefaultProps.Prompt;
   }
 
   set username(s) {

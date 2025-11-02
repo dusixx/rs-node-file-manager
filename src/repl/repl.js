@@ -13,12 +13,19 @@ export class REPL {
     this.#init();
     REPL.#instance = this;
   }
+
+  /**
+   * @param {{username: string, prompt: string, workingDir: string}} props 
+   * @returns 
+   */
   static getInstance(props) {
     return this.#instance ?? (this.#instance = new REPL(props));
   }
+
   run() {
     this.#cli.run();
   }
+
   #init() {
     this.#cli.onLine = async (line) => {
       await evaluate(line);

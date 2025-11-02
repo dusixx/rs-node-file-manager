@@ -1,8 +1,8 @@
 import { styleText as style } from 'util';
 import { isArray, isFunc, isNonEmptyStr, isObj } from "../utils/index.js";
-import { Commands } from './commands.js';
+import { CommandList } from './commands.js';
 
-const HINT = style('blackBright',
+const HINT = style('gray',
   `If argument contains spaces, enclose it in double quotes (eg., cd "c:/program files")`
 );
 
@@ -16,7 +16,7 @@ const showError = (type, msg) => {
   if (msg) {
     prefix += ': ';
   }
-  console.log(`${style('redBright', prefix)}${msg}`);
+  console.log(`${style('red', prefix)}${msg}`);
 }
 
 /**
@@ -57,7 +57,7 @@ export const evaluate = async (line) => {
     return;
   }
   let [cmdName, ...args] = splitLine(line);
-  let cmd = Commands[cmdName];
+  let cmd = CommandList[cmdName];
   let nestedCmdName;
 
   if (isObj(cmd)) {

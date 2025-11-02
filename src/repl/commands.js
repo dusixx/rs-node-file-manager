@@ -1,15 +1,17 @@
 import fs from 'fs';
 import os from 'os';
+import { styleText as style } from 'util';
 import {
   compressBrotli,
   copyFile,
   createDir,
   createFile,
   decompressBrotli,
+  getCurrentDirItems,
   getSHA256,
-  listDirItems,
   moveFile,
   printFileContents,
+  removeDir,
   resolvePath
 } from "../utils/index.js";
 
@@ -22,8 +24,9 @@ const getCPUs = () => {
   });
 }
 
-export const Commands = {
-  clear: () => console.clear(),
+export const CommandList = {
+  homedir: () => process.chdir(resolvePath(os.homedir())),
+  cls: () => console.clear(),
   cd: (path) => {
     path = path === '?' ? import.meta.dirname + '/..' : path;
     process.chdir(resolvePath(path));
@@ -31,14 +34,17 @@ export const Commands = {
   up: () => {
     process.chdir(resolvePath('..'));
   },
-  ls: listDirItems,
+  ls: getCurrentDirItems,
   cat: printFileContents,
   add: createFile,
   mkdir: createDir,
   rmdir: async (path) => {
-    await fs.promises.rmdir(path);
+    await removeDir(path, false);
   },
   rn: async (oldPath, newPath) => {
+    if (oldPath.localeCompare(newPath) === 0) {
+      throw Error('same name');
+    }
     await fs.promises.rename(resolvePath(oldPath), resolvePath(newPath))
   },
   cp: copyFile,
@@ -46,11 +52,15 @@ export const Commands = {
   rm: async (path) => {
     await fs.promises.unlink(resolvePath(path));
   },
-  hash: getSHA256,
+  hash: async (path) => style('gray', 'SHA256: ') + await getSHA256(path),
   compress: compressBrotli,
   decompress: decompressBrotli,
   os: {
-    cpus: getCPUs,
+    cpus() {
+      const items = getCPUs();
+      console.log('Cores total:', items.length);
+      return items;
+    },
     homedir: () => os.userInfo().homedir,
     username: () => os.userInfo().username,
     architecture: () => os.arch(),

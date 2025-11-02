@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import streamPromises from 'stream/promises';
-import { checkPath, createDir, resolvePath } from "./fs.js";
+import { checkPath, createDir, removeDir, resolvePath } from "./fs.js";
 
 /**
  * @param {string} srcFile 
@@ -41,7 +41,7 @@ export const copyOrMoveFile = async (srcFile, dstDir, removeSrc = false) => {
   } catch (err) {
     // clean up if failed
     if (justCreated) {
-      await fs.promises.rmdir(dstDir);
+      await removeDir(dstDir);
     }
     throw err;
   }

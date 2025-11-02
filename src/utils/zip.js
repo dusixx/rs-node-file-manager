@@ -17,15 +17,17 @@ export const compressDecompressFile = async (srcFile, dstFile, { action, deleteS
   if (!srcInfo.exists || !srcInfo.isFile) {
     throw Error(`no such file: ${srcFile}`);
   }
-  // create if does not exists
   dstFile = resolvePath(dstFile);
   const dstDir = path.dirname(dstFile);
   const dstInfo = await checkPath(dstDir);
+  if (dstInfo.isFile) {
+    throw Error(`not a directory: ${dstDir}`);
+  }
+  // create if does not exists
   if (!dstInfo.exists) {
     await createDir(dstDir);
     justCreated = true;
   }
-
   try {
     const readStream = fs.createReadStream(srcFile);
     const writeStream = fs.createWriteStream(dstFile, { flags: 'wx' });
@@ -39,7 +41,7 @@ export const compressDecompressFile = async (srcFile, dstFile, { action, deleteS
   } catch (err) {
     // clean up if failed
     if (justCreated) {
-      await fs.promises.rmdir(dstDir);
+      await removeDir(dstDir);;
     }
     throw err;
   }

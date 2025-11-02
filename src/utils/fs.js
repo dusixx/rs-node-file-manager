@@ -36,7 +36,8 @@ export const checkPath = async (path) => {
  * @returns {string}
  */
 export const resolvePath = (...args) => {
-  return path.resolve(process.cwd(), ...args.map(v => path.normalize(v ?? '')));
+  const parts = args.map(v => path.normalize(v ?? ''));
+  return path.resolve(process.cwd(), ...parts);
 }
 
 /**
@@ -79,13 +80,28 @@ export const getDirentType = ent => {
  * @param {string} path 
  */
 export const createDir = async (path) => {
-  const info = await checkPath(path);
+  const dst = resolvePath(path);
+  const info = await checkPath(dst);
   if (info.exists) {
     throw Error('already exists');
   }
-  await fs.promises.mkdir(resolvePath(path), {
+  await fs.promises.mkdir(resolvePath(dst), {
     recursive: true
   });
+}
+
+/**
+ * @param {string} path 
+ */
+export const removeDir = async (path, silent = true) => {
+  const src = resolvePath(path);
+  if (!silent) {
+    const info = await checkPath(src);
+    if (!info.exists || info.isFile) {
+      throw Error(`no such directory ${src}`);
+    }
+  }
+  await fs.promises.rm(src, { recursive: true, force: true });
 }
 
 /**
@@ -115,12 +131,24 @@ export const createFile = async (path) => {
   }
 }
 
-export const listDirItems = async () => {
+/**
+ * @returns {Promise<{name: string, type: string}[]>}
+ */
+export const getCurrentDirItems = async () => {
   const src = resolvePath();
-  return (await getDirents(src) ?? []).reduce((res, ent) => {
-    return res.concat({
-      name: ent.name,
-      type: getDirentType(ent)
-    });
-  }, []);
+  const dirs = [];
+  const files = [];
+
+  for (const ent of await getDirents(src) ?? []) {
+    const item = { name: ent.name, type: getDirentType(ent) }
+    if (ent.isDirectory()) {
+      dirs.push(item);
+    } else {
+      files.push(item);
+    }
+  }
+  const collator = new Intl.Collator(['en-us', 'ru-ru']);
+  const comp = (a, b) => collator.compare(a.name, b.name);
+
+  return [...dirs.sort(comp), ...files.sort(comp)];
 }
