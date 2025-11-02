@@ -5,18 +5,13 @@ import { checkPath, createDir, removeDir, resolvePath } from "./fs.js";
 
 /**
  * @param {string} srcFile 
- * @param {string} dstDir 
- * @param {boolean} removeSrc 
+ * @param {string} dstDir
  */
-export const copyOrMoveFile = async (srcFile, dstDir, removeSrc = false) => {
-  let justCreated = false;
-
-  const oldFilePath = resolvePath(srcFile);
-  const srcInfo = await checkPath(oldFilePath);
-  if (!srcInfo.exists || !srcInfo.isFile) {
-    throw Error(`no such file: ${oldFilePath}`);
-  }
+const validatePaths = async (srcFile, dstDir) => {
+  let wasDstDirJustCreated = false;
+  srcFile = resolvePath(srcFile);
   dstDir = resolvePath(dstDir);
+
   const dstInfo = await checkPath(dstDir);
   if (dstInfo.isFile) {
     throw Error(`not a directory: ${dstDir}`);
@@ -24,23 +19,34 @@ export const copyOrMoveFile = async (srcFile, dstDir, removeSrc = false) => {
   // create if does not exists
   if (!dstInfo.exists) {
     await createDir(dstDir);
-    justCreated = true;
+    wasDstDirJustCreated = true;
   }
-  const fileName = path.basename(oldFilePath);
-  const newFilePath = resolvePath(dstDir, fileName);
+  const srcFileName = path.basename(srcFile);
+  const dstFile = resolvePath(dstDir, srcFileName);
+
+  return { wasDstDirJustCreated, srcFile, dstFile, dstDir }
+}
+
+/**
+ * @param {string} srcFile 
+ * @param {string} dstDir 
+ * @param {boolean} removeSrc 
+ */
+export const copyOrMoveFile = async (srcFilePath, dstDirPath, removeSrc = false) => {
+  const { wasDstDirJustCreated, srcFile, dstFile, dstDir } = await validatePaths(srcFilePath, dstDirPath);
 
   try {
-    const readStream = fs.createReadStream(oldFilePath);
-    const writeStream = fs.createWriteStream(newFilePath, { flags: 'wx' });
+    const readStream = fs.createReadStream(srcFile);
+    const writeStream = fs.createWriteStream(dstFile, { flags: 'wx' });
 
     await streamPromises.pipeline(readStream, writeStream);
     // remove src file
     if (removeSrc) {
-      await fs.promises.unlink(oldFilePath);
+      await fs.promises.unlink(srcFile);
     }
   } catch (err) {
     // clean up if failed
-    if (justCreated) {
+    if (wasDstDirJustCreated) {
       await removeDir(dstDir);
     }
     throw err;

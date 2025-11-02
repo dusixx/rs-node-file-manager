@@ -16,13 +16,9 @@ const FileExtension = {
  */
 const validatePaths = async (srcFile, dstFile) => {
   let wasDstDirJustCreated = false;
-
   srcFile = resolvePath(srcFile);
-  const srcInfo = await checkPath(srcFile);
-  if (!srcInfo.exists || !srcInfo.isFile) {
-    throw Error(`no such file: ${srcFile}`);
-  }
   dstFile = resolvePath(dstFile);
+
   const dstDir = path.dirname(dstFile);
   const dstInfo = await checkPath(dstDir);
   if (dstInfo.isFile) {
