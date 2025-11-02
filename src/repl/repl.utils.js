@@ -20,6 +20,20 @@ const showError = (type, msg) => {
 }
 
 /**
+ * @param {Error} err 
+ */
+const getErrorMessage = (err) => {
+  return err.message.replace(/,\s+/g, '\n').replace(/^[A-Z]+\:\s+/, '');
+}
+
+/**
+ * @param {string} line 
+ */
+const splitLine = (line) => {
+  return line.trim().match(/".*"|[^\s]+/g)?.map(v => v.replaceAll('"', '')) ?? [];
+}
+
+/**
  * @param {(...args: string[]) => Promise<unknown>} cmd 
  * @param {string[]} args
  */
@@ -38,15 +52,8 @@ const evalCommand = async (cmd, args, cmdName) => {
       console[isArray(output) ? 'table' : 'log'](output);
     }
   } catch (err) {
-    showError('operation', err.message.replace(/,\s+/g, '\n'));
+    showError('operation', getErrorMessage(err));
   }
-}
-
-/**
- * @param {string} line 
- */
-const splitLine = (line) => {
-  return line.trim().match(/".*"|[^\s]+/g)?.map(v => v.replaceAll('"', '')) ?? [];
 }
 
 /**

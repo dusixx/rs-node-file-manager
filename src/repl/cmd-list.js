@@ -5,7 +5,7 @@ import {
   compressBrotli,
   copyFile,
   createDir,
-  createFile,
+  createEmptyFile,
   decompressBrotli,
   getCurrentDirItems,
   getSHA256,
@@ -36,7 +36,7 @@ export const CommandList = {
   },
   ls: getCurrentDirItems,
   cat: printFileContents,
-  add: createFile,
+  add: createEmptyFile,
   mkdir: createDir,
   rmdir: async (path) => {
     await removeDir(path, false);
@@ -52,7 +52,9 @@ export const CommandList = {
   rm: async (path) => {
     await fs.promises.unlink(resolvePath(path));
   },
-  hash: async (path) => style('gray', 'SHA256: ') + await getSHA256(path),
+  hash: async (path) => {
+    return style('gray', 'SHA256: ') + await getSHA256(path);
+  },
   compress: compressBrotli,
   decompress: decompressBrotli,
   os: {
