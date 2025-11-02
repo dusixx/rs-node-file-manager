@@ -26,6 +26,9 @@ const validatePaths = async (srcFile, dstFile) => {
   if (!await isFileExists(srcFile)) {
     throw new CustomError('no such file', srcFile);
   }
+  if ((await checkPath(dstFile)).isDirectory) {
+    throw new CustomError('destination file name is not specified', dstFile);
+  }
   const dstDir = path.dirname(dstFile);
   const dstInfo = await checkPath(dstDir);
   if (dstInfo.isFile) {

@@ -17,7 +17,12 @@ const checkAccess = async (path, mode) => {
 
 /**
  * @param {string} path
- * @returns {Promise<{exists: boolean, readable: boolean, writeable: boolean, isFile: boolean}>}
+ * @returns {Promise<{
+ * exists: boolean, 
+ * readable: boolean, 
+ * writeable: boolean, 
+ * isFile: boolean, 
+ * isDirectory: boolean}>}
  */
 export const checkPath = async (path) => {
   const result = {};
@@ -32,6 +37,7 @@ export const checkPath = async (path) => {
   }
   const stats = await fs.promises.stat(path);
   result.isFile = stats.isFile();
+  result.isDirectory = stats.isDirectory();
 
   return result;
 };
