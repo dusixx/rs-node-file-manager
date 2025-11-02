@@ -1,0 +1,74 @@
+import fs from 'fs';
+import path from 'path';
+import zlib from 'zlib';
+import { checkPath, createDir, resolvePath } from './fs.js';
+
+/**
+ * @param {string} src 
+ * @param {string} dst 
+ * @param {{ action: 'Gzip'|'Gunzip'|'BrotliCompress'|'BrotliDecompress', deleteSource: boolean }} options
+ */
+export const compressDecompressFile = async (srcFile, dstFile, { action, deleteSource = true } = {}) => {
+  let justCreated = false;
+
+  srcFile = resolvePath(srcFile);
+  const srcInfo = await checkPath(srcFile);
+  if (!srcInfo.exists || !srcInfo.isFile) {
+    throw Error(`no such file: ${srcFile}`);
+  }
+  // create if does not exists
+  dstFile = resolvePath(dstFile);
+  const dstDir = path.dirname(dstFile);
+  const dstInfo = await checkPath(dstDir);
+  if (!dstInfo.exists) {
+    await createDir(dstDir);
+    justCreated = true;
+  }
+
+  try {
+    const readStream = fs.createReadStream(srcFile);
+    const writeStream = fs.createWriteStream(dstFile, { flags: 'wx' });
+    const zlibStream = zlib[`create${action}`]();
+
+    return new Promise((resolve) => {
+      writeStream.on('open', async () => {
+        await streamPromises.pipeline(readStream, zlibStream, writeStream);
+        // remove src file
+        if (deleteSource) {
+          await fs.promises.unlink(srcFile);
+        }
+        resolve();
+      }).on('close', () => {
+        writeStream.end();
+      });
+    })
+  } catch (err) {
+    // clean up if failed
+    if (justCreated) {
+      await fs.promises.rm(dstDir, { recursive: true, force: true });
+    }
+    throw err;
+  }
+};
+
+/**
+ * @param {string} src 
+ * @param {string} dst 
+ */
+export const compressBrotli = async (src, dst) => {
+  await compressDecompressFile(src, dst, {
+    action: 'BrotliCompress',
+    deleteSource: true
+  });
+}
+
+/**
+ * @param {string} src 
+ * @param {string} dst 
+ */
+export const decompressBrotli = async (src, dst) => {
+  await compressDecompressFile(src, dst, {
+    action: 'BrotliDecompress',
+    deleteSource: true
+  });
+}

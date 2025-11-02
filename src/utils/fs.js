@@ -1,10 +1,10 @@
-import { Dirent } from "fs";
-import fs from "fs/promises";
+import fs, { Dirent } from "fs";
+import fsPromises from "fs/promises";
 import path from "path";
 
 const checkAccess = async (path, mode) => {
   try {
-    await fs.access(path, mode);
+    await fsPromises.access(path, mode);
     return true;
   } catch {
     return false;
@@ -26,7 +26,7 @@ export const checkPath = async (path) => {
       return result;
     }
   }
-  const stats = await fs.stat(path);
+  const stats = await fsPromises.stat(path);
   result.isFile = stats.isFile();
 
   return result;
@@ -46,7 +46,7 @@ export const resolvePath = (...args) => {
  */
 export const getDirents = async (dirPath) => {
   try {
-    const dirents = await fs.readdir(dirPath, {
+    const dirents = await fsPromises.readdir(dirPath, {
       withFileTypes: true
     });
     return dirents.length > 0 ? dirents : null;
@@ -54,3 +54,70 @@ export const getDirents = async (dirPath) => {
     return null;
   }
 };
+
+/**
+ * @param {Dirent} ent 
+ */
+export const getDirentType = ent => {
+  const Types = {
+    isFile: 'file',
+    isDirectory: 'dir',
+    isSymbolicLink: 'symlnk',
+    isBlockDevice: 'blckdev',
+    isCharacterDevice: 'chrdev',
+    isFIFO: 'fifo',
+    isSocket: 'sckt'
+  }
+  for (const [method, type] of Object.entries(Types)) {
+    if (ent[method]()) {
+      return type;
+    }
+  }
+  return 'unk';
+}
+
+/**
+ * @param {string} path 
+ */
+export const createDir = async (path) => {
+  await fsPromises.mkdir(resolvePath(path), {
+    recursive: true
+  });
+}
+
+/**
+ * @param {string} path 
+ */
+export const printFileContents = async (path) => {
+  const src = resolvePath(path);
+  const readStream = fs.createReadStream(src);
+  await new Promise((resolve) => {
+    readStream.on('end', () => {
+      console.log();
+      resolve();
+    }).pipe(process.stdout);
+  })
+}
+
+/**
+ * @param {string} path 
+ */
+export const createFile = async (path) => {
+  let handle;
+  const src = resolvePath(path);
+  try {
+    handle = await fs.promises.open(src, 'wx');
+  } finally {
+    await handle?.close();
+  }
+}
+
+export const listDirItems = async () => {
+  const src = resolvePath();
+  return (await getDirents(src) ?? []).reduce((res, ent) => {
+    return res.concat({
+      name: ent.name,
+      type: getDirentType(ent)
+    });
+  }, []);
+}

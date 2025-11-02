@@ -1,18 +1,25 @@
-import { styleText } from "util";
+import crypto from 'crypto';
+import fs from 'fs';
+import streamPromises from 'stream/promises';
+import { resolvePath } from './fs.js';
 
+export const typeName = v => {
+  return Object.prototype.toString.call(v).slice(8, -1).toLowerCase();
+}
 export const isStr = v => typeof v === 'string';
 export const isNonEmptyStr = v => v && isStr(v);
 export const isFunc = v => typeof v === 'function';
+export const isArray = v => Array.isArray(v);
+export const isObj = v => typeName(v) === 'object';
 
 /**
- * @param {string[]} arr 
  * @returns {Record<string, string[]>}
  */
-export const parseArgs = (arr = process.argv.slice(2)) => {
+export const parseScriptArgs = () => {
   const map = {};
   let cur;
 
-  for (const arg of arr) {
+  for (const arg of process.argv.slice(2)) {
     if (arg.startsWith("--")) {
       cur = arg.slice(2);
       continue;
@@ -22,18 +29,22 @@ export const parseArgs = (arr = process.argv.slice(2)) => {
   return map;
 };
 
-export const Log = {
-  /** @param {Parameters<typeof styleText>} args */
-  style(...args) {
-    return styleText(...args);
-  },
-  success(...args) {
-    console.log(styleText("bgGreen", args.join(' ')));
-  },
-  info(...args) {
-    console.log(styleText("bgBlackBright", args.join(' ')));
-  },
-  error(...args) {
-    console.log(styleText("bgRed", args.join(' ')));
-  }
+/**
+ * @param {string} filePath 
+ * @param {'sha256'|'sha512'|'sha3-256'|'sha3-512'|'md5'|'sha1'} algorithm 
+ */
+export const getHash = async (filePath, algorithm = 'sha256') => {
+  const src = resolvePath(filePath);
+  const hash = crypto.createHash(algorithm);
+  await streamPromises.pipeline(fs.createReadStream(src), hash);
+
+  return hash.digest('hex');
+}
+
+/**
+ * @param {string} filePath 
+ * @returns {Promise<string>}
+ */
+export const getSHA256 = async (filePath) => {
+  return await getHash(filePath, "sha256");
 }
