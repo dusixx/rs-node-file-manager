@@ -28,7 +28,6 @@ const parseError = (err) => {
   } else {
     [message, details] = err.message.split(RegExp(`,\\s+${err.syscall}\\s`));
     message = message?.replace(/^[A-Z]+\:\s+/, '');
-    details = details?.replace(/^'|'$/g, '');
   }
   return details ? `${message}\n${style('gray', details)}` : message;
 }
@@ -74,15 +73,15 @@ export const evaluate = async (line) => {
   let cmd = CommandList[cmdName];
   let nestedCmdName;
 
-  if (isObj(cmd)) {
-    nestedCmdName = args[0]?.replace(/^--/, '') ?? '';
+  if (isObj(cmd) && /^--/.test(args[0])) {
+    nestedCmdName = args[0].slice(2);
     args = args.slice(1);
     cmd = cmd[nestedCmdName];
   }
   cmdName = nestedCmdName ? `${cmdName}: ${nestedCmdName}` : cmdName;
 
   if (!isFunc(cmd)) {
-    showError('input', `${cmdName}: unknown command`);
+    showError('input', `${cmdName}: not a command`);
     return;
   }
   await evalCommand(cmd, args, cmdName);
