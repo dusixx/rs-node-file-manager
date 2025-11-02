@@ -1,6 +1,6 @@
 import { REPL } from "./repl/repl.js";
-import { parseScriptArgs } from "./utils/index.js";
 
-const { username } = parseScriptArgs();
+const [key, value] = (process.argv.slice(2)[0] ?? '').split('=');
+const username = key === '--username' ? value : '';
 
-new REPL({ username }).run();
+REPL.getInstance({ username }).run();

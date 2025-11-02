@@ -23,7 +23,7 @@ const getCPUs = () => {
 }
 
 export const Commands = {
-  clr: () => console.clear(),
+  clear: () => console.clear(),
   cd: (path) => {
     path = path === '?' ? import.meta.dirname + '/..' : path;
     process.chdir(resolvePath(path));
@@ -35,6 +35,9 @@ export const Commands = {
   cat: printFileContents,
   add: createFile,
   mkdir: createDir,
+  rmdir: async (path) => {
+    await fs.promises.rmdir(path);
+  },
   rn: async (oldPath, newPath) => {
     await fs.promises.rename(resolvePath(oldPath), resolvePath(newPath))
   },
@@ -51,6 +54,6 @@ export const Commands = {
     homedir: () => os.userInfo().homedir,
     username: () => os.userInfo().username,
     architecture: () => os.arch(),
-    EOL: () => os.EOL
+    EOL: () => os.EOL.replace(/\r/, '\\r').replace(/\n/, '\\n')
   }
 };

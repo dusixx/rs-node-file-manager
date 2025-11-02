@@ -1,10 +1,9 @@
 import fs, { Dirent } from "fs";
-import fsPromises from "fs/promises";
 import path from "path";
 
 const checkAccess = async (path, mode) => {
   try {
-    await fsPromises.access(path, mode);
+    await fs.promises.access(path, mode);
     return true;
   } catch {
     return false;
@@ -26,7 +25,7 @@ export const checkPath = async (path) => {
       return result;
     }
   }
-  const stats = await fsPromises.stat(path);
+  const stats = await fs.promises.stat(path);
   result.isFile = stats.isFile();
 
   return result;
@@ -46,7 +45,7 @@ export const resolvePath = (...args) => {
  */
 export const getDirents = async (dirPath) => {
   try {
-    const dirents = await fsPromises.readdir(dirPath, {
+    const dirents = await fs.promises.readdir(dirPath, {
       withFileTypes: true
     });
     return dirents.length > 0 ? dirents : null;
@@ -80,7 +79,11 @@ export const getDirentType = ent => {
  * @param {string} path 
  */
 export const createDir = async (path) => {
-  await fsPromises.mkdir(resolvePath(path), {
+  const info = await checkPath(path);
+  if (info.exists) {
+    throw Error('already exists');
+  }
+  await fs.promises.mkdir(resolvePath(path), {
     recursive: true
   });
 }
@@ -91,11 +94,11 @@ export const createDir = async (path) => {
 export const printFileContents = async (path) => {
   const src = resolvePath(path);
   const readStream = fs.createReadStream(src);
-  await new Promise((resolve) => {
+  await new Promise((resolve, reject) => {
     readStream.on('end', () => {
       console.log();
       resolve();
-    }).pipe(process.stdout);
+    }).on('error', reject).pipe(process.stdout);
   })
 }
 

@@ -13,23 +13,6 @@ export const isArray = v => Array.isArray(v);
 export const isObj = v => typeName(v) === 'object';
 
 /**
- * @returns {Record<string, string[]>}
- */
-export const parseScriptArgs = () => {
-  const map = {};
-  let cur;
-
-  for (const arg of process.argv.slice(2)) {
-    if (arg.startsWith("--")) {
-      cur = arg.slice(2);
-      continue;
-    }
-    (map[cur] = map[cur] ?? []).push(arg);
-  }
-  return map;
-};
-
-/**
  * @param {string} filePath 
  * @param {'sha256'|'sha512'|'sha3-256'|'sha3-512'|'md5'|'sha1'} algorithm 
  */

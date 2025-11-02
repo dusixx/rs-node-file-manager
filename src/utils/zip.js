@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import streamPromises from 'stream/promises';
 import zlib from 'zlib';
 import { checkPath, createDir, resolvePath } from './fs.js';
 
@@ -30,22 +31,15 @@ export const compressDecompressFile = async (srcFile, dstFile, { action, deleteS
     const writeStream = fs.createWriteStream(dstFile, { flags: 'wx' });
     const zlibStream = zlib[`create${action}`]();
 
-    return new Promise((resolve) => {
-      writeStream.on('open', async () => {
-        await streamPromises.pipeline(readStream, zlibStream, writeStream);
-        // remove src file
-        if (deleteSource) {
-          await fs.promises.unlink(srcFile);
-        }
-        resolve();
-      }).on('close', () => {
-        writeStream.end();
-      });
-    })
+    await streamPromises.pipeline(readStream, zlibStream, writeStream);
+    // remove src file
+    if (deleteSource) {
+      await fs.promises.unlink(srcFile);
+    }
   } catch (err) {
     // clean up if failed
     if (justCreated) {
-      await fs.promises.rm(dstDir, { recursive: true, force: true });
+      await fs.promises.rmdir(dstDir);
     }
     throw err;
   }

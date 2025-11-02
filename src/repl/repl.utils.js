@@ -23,9 +23,9 @@ const showError = (type, msg) => {
  * @param {(...args: string[]) => Promise<unknown>} cmd 
  * @param {string[]} args
  */
-const evalCommand = async (cmd, args) => {
+const evalCommand = async (cmd, args, cmdName) => {
   if (cmd.length !== args.length) {
-    showError('input', `expected ${cmd.length} args, got ${args.length}`);
+    showError('input', `${cmdName}: expected ${cmd.length} args, got ${args.length}`);
     // to many arguments
     if (cmd.length > 0 && cmd.length < args.length) {
       console.log(HINT);
@@ -61,14 +61,15 @@ export const evaluate = async (line) => {
   let nestedCmdName;
 
   if (isObj(cmd)) {
-    nestedCmdName = args[0].slice(2);
+    nestedCmdName = args[0].replace(/^--/, '');
     args = args.slice(1);
     cmd = cmd[nestedCmdName];
   }
+  cmdName = nestedCmdName ? `${cmdName}: ${nestedCmdName}` : cmdName;
+
   if (!isFunc(cmd)) {
-    cmdName = nestedCmdName ? `${cmdName}: ${nestedCmdName}` : cmdName;
     showError('input', `${cmdName}: unknown command`);
     return;
   }
-  await evalCommand(cmd, args);
+  await evalCommand(cmd, args, cmdName);
 }

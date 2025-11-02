@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import streamPromises from 'stream/promises';
 import { checkPath, createDir, resolvePath } from "./fs.js";
 
 /**
@@ -15,9 +16,12 @@ export const copyOrMoveFile = async (srcFile, dstDir, removeSrc = false) => {
   if (!srcInfo.exists || !srcInfo.isFile) {
     throw Error(`no such file: ${oldFilePath}`);
   }
-  // create if does not exists
   dstDir = resolvePath(dstDir);
   const dstInfo = await checkPath(dstDir);
+  if (dstInfo.isFile) {
+    throw Error(`not a directory: ${dstDir}`);
+  }
+  // create if does not exists
   if (!dstInfo.exists) {
     await createDir(dstDir);
     justCreated = true;
@@ -26,18 +30,18 @@ export const copyOrMoveFile = async (srcFile, dstDir, removeSrc = false) => {
   const newFilePath = resolvePath(dstDir, fileName);
 
   try {
-    const rs = fs.createReadStream(oldFilePath);
-    const ws = fs.createWriteStream(newFilePath, { flags: 'wx' });
-    await new Promise((resolve) => rs.on('end', async () => {
-      if (removeSrc) {
-        await fs.promises.unlink(oldFilePath);
-      }
-      resolve();
-    }).pipe(ws));
+    const readStream = fs.createReadStream(oldFilePath);
+    const writeStream = fs.createWriteStream(newFilePath, { flags: 'wx' });
+
+    await streamPromises.pipeline(readStream, writeStream);
+    // remove src file
+    if (removeSrc) {
+      await fs.promises.unlink(oldFilePath);
+    }
   } catch (err) {
     // clean up if failed
     if (justCreated) {
-      await fs.promises.rm(dstDir, { recursive: true, force: true });
+      await fs.promises.rmdir(dstDir);
     }
     throw err;
   }
