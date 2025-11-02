@@ -1,6 +1,6 @@
-import { Interpreter } from "./interpreter/interpreter.js";
-import { parseArgs } from "./utils/index.js";
+import { REPL } from "./repl/repl.js";
+import { parseScriptArgs } from "./utils/index.js";
 
-const { username } = parseArgs();
+const { username } = parseScriptArgs();
 
-new Interpreter({ username }).run();
+new REPL({ username }).run();
