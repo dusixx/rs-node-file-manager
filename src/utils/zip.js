@@ -56,7 +56,7 @@ export const compressDecompressFile = async (srcFilePath, dstFilePath, {
   }
   let { wasDstDirJustCreated, srcFile, dstFile, dstDir } = await validatePaths(srcFilePath, dstFilePath);
 
-  // append ext for compressed file if needed
+  // append ext for compressed file
   if (appendExtension) {
     const ext = MethodExtensionMap[method];
     if (path.extname(dstFile) !== ext) {

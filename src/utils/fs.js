@@ -1,5 +1,6 @@
 import fs, { Dirent } from "fs";
 import path from "path";
+import { CustomError } from "./misc.js";
 
 /**
  * @param {string} path 
@@ -95,11 +96,25 @@ export const createDir = async (path) => {
   const dst = resolvePath(path);
   const info = await checkPath(dst);
   if (info.exists) {
-    throw Error('already exists');
+    throw new CustomError('already exists', dst);
   }
   await fs.promises.mkdir(resolvePath(dst), {
     recursive: true
   });
+}
+
+/**
+ * @param {string} oldName 
+ * @param {string} newName 
+ */
+export const renameFile = async (oldName, newName) => {
+  const src = resolvePath(oldName);
+  const dst = resolvePath(newName);
+  const info = await checkPath(dst);
+  if (info.exists) {
+    throw new CustomError('file already exists', dst);
+  }
+  await fs.promises.rename(src, dst);
 }
 
 /**
@@ -110,7 +125,7 @@ export const removeDir = async (path, silent = true) => {
   if (!silent) {
     const info = await checkPath(src);
     if (!info.exists || info.isFile) {
-      throw Error(`no such directory ${src}`);
+      throw new CustomError('no such directory', src);
     }
   }
   await fs.promises.rm(src, { recursive: true, force: true });

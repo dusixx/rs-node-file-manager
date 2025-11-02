@@ -12,6 +12,7 @@ import {
   moveFile,
   printFileContents,
   removeDir,
+  renameFile,
   resolvePath
 } from "../utils/index.js";
 
@@ -41,12 +42,7 @@ export const CommandList = {
   rmdir: async (path) => {
     await removeDir(path, false);
   },
-  rn: async (oldPath, newPath) => {
-    if (oldPath.localeCompare(newPath) === 0) {
-      throw Error('same name');
-    }
-    await fs.promises.rename(resolvePath(oldPath), resolvePath(newPath));
-  },
+  rn: renameFile,
   cp: copyFile,
   mv: moveFile,
   rm: async (path) => {

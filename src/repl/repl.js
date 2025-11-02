@@ -16,7 +16,6 @@ export class REPL {
 
   /**
    * @param {{username: string, prompt: string, workingDir: string}} props 
-   * @returns 
    */
   static getInstance(props) {
     return this.#instance ?? (this.#instance = new REPL(props));

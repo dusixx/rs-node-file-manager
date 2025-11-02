@@ -35,11 +35,11 @@ export const getSHA256 = async (filePath) => {
 
 export class CustomError extends Error {
   /**
-   * @param {string} msg 
+   * @param {string} message 
    * @param {string} details 
    */
-  constructor(msg, details) {
-    super(msg);
+  constructor(message, details) {
+    super(message);
     this.details = details;
   }
 }

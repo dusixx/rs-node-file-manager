@@ -27,18 +27,10 @@ const parseError = (err) => {
     [message, details] = [err.message, err.details];
   } else {
     [message, details] = err.message.split(RegExp(`,\\s+${err.syscall}\\s`));
-    message = message.replace(/^[A-Z]+\:\s+/, '');
-    details = details.replace(/^'|'$/g, '');
+    message = message?.replace(/^[A-Z]+\:\s+/, '');
+    details = details?.replace(/^'|'$/g, '');
   }
   return details ? `${message}\n${style('gray', details)}` : message;
-
-}
-
-/**
- * @param {string} line 
- */
-const splitLine = (line) => {
-  return line.trim().match(/".*"|[^\s]+/g)?.map(v => v.replaceAll('"', '')) ?? [];
 }
 
 /**
@@ -62,6 +54,13 @@ const evalCommand = async (cmd, args, cmdName) => {
   } catch (err) {
     showError('operation', parseError(err));
   }
+}
+
+/**
+ * @param {string} line 
+ */
+const splitLine = (line) => {
+  return line.trim().match(/".*"|[^\s]+/g)?.map(v => v.replaceAll('"', '')) ?? [];
 }
 
 /**
