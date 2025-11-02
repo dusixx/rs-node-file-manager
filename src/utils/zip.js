@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import streamPromises from 'stream/promises';
 import zlib from 'zlib';
-import { checkPath, createDir, removeDir, resolvePath } from './fs.js';
+import { checkPath, createDir, isFileExists, removeDir, resolvePath } from './fs.js';
 
 const FileExtension = {
   BrotliCompress: '.br',
@@ -19,6 +19,9 @@ const validatePaths = async (srcFile, dstFile) => {
   srcFile = resolvePath(srcFile);
   dstFile = resolvePath(dstFile);
 
+  if (!await isFileExists(srcFile)) {
+    throw Error(`no such file: ${srcFile}`);
+  }
   const dstDir = path.dirname(dstFile);
   const dstInfo = await checkPath(dstDir);
   if (dstInfo.isFile) {

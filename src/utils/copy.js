@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import streamPromises from 'stream/promises';
-import { checkPath, createDir, removeDir, resolvePath } from "./fs.js";
+import { checkPath, createDir, isFileExists, removeDir, resolvePath } from "./fs.js";
 
 /**
  * @param {string} srcFile 
@@ -12,6 +12,9 @@ const validatePaths = async (srcFile, dstDir) => {
   srcFile = resolvePath(srcFile);
   dstDir = resolvePath(dstDir);
 
+  if (!await isFileExists(srcFile)) {
+    throw Error(`no such file: ${srcFile}`);
+  }
   const dstInfo = await checkPath(dstDir);
   if (dstInfo.isFile) {
     throw Error(`not a directory: ${dstDir}`);

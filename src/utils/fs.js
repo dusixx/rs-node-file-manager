@@ -36,6 +36,14 @@ export const checkPath = async (path) => {
 };
 
 /**
+ * @param {string} path 
+ */
+export const isFileExists = async (path) => {
+  const { exists, isFile } = await checkPath(path);
+  return exists && isFile;
+}
+
+/**
  * @param {string[]} args 
  * @returns {string}
  */
