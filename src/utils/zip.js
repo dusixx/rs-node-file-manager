@@ -11,17 +11,10 @@ const FileExtension = {
 }
 
 /**
- * @typedef {'Gzip'|'Gunzip'|'BrotliCompress'|'BrotliDecompress'|'ZstdCompress'|'ZstdDecompress'} CompressionMethod
- * @typedef {{ method: CompressionMethod, deleteSource: boolean, appendExtension: boolean }} CompressionOptions
- * @param {string} srcFile
- * @param {string} dstFile
- * @param {CompressionOptions} options
+ * @param {string} srcFile 
+ * @param {string} dstFile 
  */
-export const compressDecompressFile = async (srcFile, dstFile, {
-  method,
-  deleteSource = true,
-  appendExtension = true
-} = {}) => {
+const validatePaths = async (srcFile, dstFile) => {
   let wasDstDirJustCreated = false;
 
   srcFile = resolvePath(srcFile);
@@ -40,6 +33,23 @@ export const compressDecompressFile = async (srcFile, dstFile, {
     await createDir(dstDir);
     wasDstDirJustCreated = true;
   }
+  return { srcFile, dstFile, dstDir, wasDstDirJustCreated };
+}
+
+/**
+ * @typedef {'Gzip'|'Gunzip'|'BrotliCompress'|'BrotliDecompress'|'ZstdCompress'|'ZstdDecompress'} CompressionMethod
+ * @typedef {{ method: CompressionMethod, deleteSource: boolean, appendExtension: boolean }} CompressionOptions
+ * @param {string} srcFilePath
+ * @param {string} dstFilePath
+ * @param {CompressionOptions} options
+ */
+export const compressDecompressFile = async (srcFilePath, dstFilePath, {
+  method,
+  deleteSource = true,
+  appendExtension = true
+} = {}) => {
+  let { wasDstDirJustCreated, srcFile, dstFile, dstDir } = await validatePaths(srcFilePath, dstFilePath);
+
   // append ext for compressed file if needed
   if (appendExtension) {
     const ext = FileExtension[method];
@@ -47,7 +57,6 @@ export const compressDecompressFile = async (srcFile, dstFile, {
       dstFile += ext ?? '';
     }
   }
-
   let writeStream;
   try {
     const zlibStream = zlib[`create${method}`]();
