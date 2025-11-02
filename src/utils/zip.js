@@ -2,16 +2,27 @@ import fs from 'fs';
 import path from 'path';
 import streamPromises from 'stream/promises';
 import zlib from 'zlib';
-import { checkPath, createDir, resolvePath } from './fs.js';
+import { checkPath, createDir, removeDir, resolvePath } from './fs.js';
+
+const FileExtension = {
+  BrotliCompress: '.br',
+  ZstdCompress: '.zst',
+  Gzip: '.gz'
+}
 
 /**
- * @typedef {'Gzip'|'Gunzip'|'BrotliCompress'|'BrotliDecompress'|'ZstdCompress'|'ZstdDecompress'} ActionType
- * @param {string} src 
- * @param {string} dst 
- * @param {{ action: ActionType, deleteSource: boolean }} options
+ * @typedef {'Gzip'|'Gunzip'|'BrotliCompress'|'BrotliDecompress'|'ZstdCompress'|'ZstdDecompress'} CompressionMethod
+ * @typedef {{ method: CompressionMethod, deleteSource: boolean, appendExtension: boolean }} CompressionOptions
+ * @param {string} srcFile
+ * @param {string} dstFile
+ * @param {CompressionOptions} options
  */
-export const compressDecompressFile = async (srcFile, dstFile, { action, deleteSource = true } = {}) => {
-  let justCreated = false;
+export const compressDecompressFile = async (srcFile, dstFile, {
+  method,
+  deleteSource = true,
+  appendExtension = true
+} = {}) => {
+  let wasDstDirJustCreated = false;
 
   srcFile = resolvePath(srcFile);
   const srcInfo = await checkPath(srcFile);
@@ -27,12 +38,21 @@ export const compressDecompressFile = async (srcFile, dstFile, { action, deleteS
   // create if does not exists
   if (!dstInfo.exists) {
     await createDir(dstDir);
-    justCreated = true;
+    wasDstDirJustCreated = true;
   }
+  // append ext for compressed file if needed
+  if (appendExtension) {
+    const ext = FileExtension[method];
+    if (path.extname(dstFile) !== ext) {
+      dstFile += ext ?? '';
+    }
+  }
+
+  let writeStream;
   try {
+    const zlibStream = zlib[`create${method}`]();
     const readStream = fs.createReadStream(srcFile);
-    const writeStream = fs.createWriteStream(dstFile, { flags: 'wx' });
-    const zlibStream = zlib[`create${action}`]();
+    writeStream = fs.createWriteStream(dstFile, { flags: 'wx' });
 
     await streamPromises.pipeline(readStream, zlibStream, writeStream);
     // remove src file
@@ -41,8 +61,12 @@ export const compressDecompressFile = async (srcFile, dstFile, { action, deleteS
     }
   } catch (err) {
     // clean up if failed
-    if (justCreated) {
+    if (wasDstDirJustCreated) {
       await removeDir(dstDir);
+    } else {
+      writeStream?.on('open', async () => {
+        await fs.promises.unlink(dstFile);
+      });
     }
     throw err;
   }
@@ -54,7 +78,7 @@ export const compressDecompressFile = async (srcFile, dstFile, { action, deleteS
  */
 export const compressBrotli = async (src, dst) => {
   await compressDecompressFile(src, dst, {
-    action: 'BrotliCompress',
+    method: 'BrotliCompress',
     deleteSource: true
   });
 }
@@ -65,7 +89,7 @@ export const compressBrotli = async (src, dst) => {
  */
 export const decompressBrotli = async (src, dst) => {
   await compressDecompressFile(src, dst, {
-    action: 'BrotliDecompress',
+    method: 'BrotliDecompress',
     deleteSource: true
   });
 }

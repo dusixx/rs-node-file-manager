@@ -45,7 +45,7 @@ export const CommandList = {
     if (oldPath.localeCompare(newPath) === 0) {
       throw Error('same name');
     }
-    await fs.promises.rename(resolvePath(oldPath), resolvePath(newPath))
+    await fs.promises.rename(resolvePath(oldPath), resolvePath(newPath));
   },
   cp: copyFile,
   mv: moveFile,
