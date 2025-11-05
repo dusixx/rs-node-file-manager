@@ -8,13 +8,17 @@ import {
   createEmptyFile,
   decompressBrotli,
   getCurrentDirItems,
-  getSHA256,
+  getHash,
+  isFunc,
   moveFile,
   printFileContents,
   removeDir,
   renameFile,
   resolvePath
-} from "../utils/index.js";
+} from "../../common/utils/index.js";
+import { CommandDescList, EXIT_CMD, HELP_CMD } from '../repl.constants.js';
+import { REPL } from '../repl.js';
+import { buildUsage } from './usage.js';
 
 const getCPUs = () => {
   return os.cpus().map(({ model, speed }) => {
@@ -25,11 +29,21 @@ const getCPUs = () => {
   });
 }
 
+const SpecialCommandList = {
+  [EXIT_CMD]: () => REPL.getInstance().exit(),
+  [HELP_CMD]: () => buildUsage(CommandList, CommandDescList),
+}
+
+const getOSModuleFuncs = () => {
+  const funcs = Object.entries(os).filter(([, v]) => isFunc(v));
+  return Object.fromEntries(funcs);
+}
+
 export const CommandList = {
-  home: () => process.chdir(resolvePath(os.homedir())),
+  ...SpecialCommandList,
   cls: () => console.clear(),
   cd: (path) => {
-    path = path === '?' ? import.meta.dirname + '/..' : path;
+    path = path === '~' ? os.homedir() : path;
     process.chdir(resolvePath(path));
   },
   up: () => {
@@ -37,7 +51,7 @@ export const CommandList = {
   },
   ls: getCurrentDirItems,
   cat: printFileContents,
-  add: createEmptyFile,
+  add: (path) => createEmptyFile(path),
   mkdir: createDir,
   rmdir: async (path) => {
     await removeDir(path, false);
@@ -48,12 +62,20 @@ export const CommandList = {
   rm: async (path) => {
     await fs.promises.unlink(resolvePath(path));
   },
-  hash: async (path) => {
-    return style('gray', 'SHA256: ') + await getSHA256(path);
+  hash: async (path, alg = 'sha256') => {
+    return style('gray', `${alg}: `) + await getHash(path, alg);
   },
-  compress: compressBrotli,
+  compress: async (src, dst = src) => {
+    await compressBrotli(src, dst);
+  },
   decompress: decompressBrotli,
   os: {
+    ...getOSModuleFuncs(),
+    test: {
+      test: {
+        test: (s) => console.log(s)
+      }
+    },
     cpus() {
       const items = getCPUs();
       console.log('Cores total:', items.length);

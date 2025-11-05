@@ -1,7 +1,9 @@
 import { CLI } from "../cli/cli.js";
-import { evaluate } from "./repl.utils.js";
+import { EXTRA_DESC } from "./repl.constants.js";
+import { evaluate } from './utils/eval.js';
 
 export class REPL {
+  /** @type {REPL} */
   static #instance;
   #cli;
 
@@ -13,18 +15,21 @@ export class REPL {
     this.#init();
     REPL.#instance = this;
   }
-
   /**
-   * @param {{username: string, prompt: string, workingDir: string}} props 
+   * @param {{
+   * username: string, 
+   * prompt: string, 
+   * workingDir: string}} props 
    */
   static getInstance(props) {
     return this.#instance ?? (this.#instance = new REPL(props));
   }
-
   run() {
-    this.#cli.run();
+    this.#cli.run(EXTRA_DESC);
   }
-
+  exit() {
+    this.#cli.close();
+  }
   #init() {
     this.#cli.onLine = async (line) => {
       await evaluate(line);
