@@ -1,7 +1,7 @@
 import { EOL } from "os";
 import { chdir, cwd, stdin, stdout } from "process";
 import readline from "readline";
-import { isFunc, isNonEmptyStr } from "../utils/index.js";
+import { isFunc, isNonEmptyStr } from "../common/utils/index.js";
 import { currentlyIn, DefaultProps, farewell, salutation } from "./cli.utils.js";
 
 export class CLI {
@@ -24,22 +24,18 @@ export class CLI {
     CLI.#instance = this;
   }
 
-  run() {
+  run(extraDesc) {
     const rl = this.#readline = readline.createInterface({
       input: stdin,
       output: stdout
     });
     this.#closed = false;
-    this.#salutation();
+    this.#salutation(extraDesc);
     this.#updatePrompt({ show: true });
 
     rl.on("line", async (line) => {
       const trimmed = line.trim();
 
-      if (trimmed === DefaultProps.ExitCmd) {
-        rl.close();
-        return;
-      }
       await this.#onLine?.(trimmed);
       if (this.isClosed) {
         return;
@@ -62,7 +58,9 @@ export class CLI {
     this.#readline.close();
   }
 
-  /** @param {{show: boolean, preserveCursor: boolean}} props */
+  /**
+   * @param {{show: boolean, preserveCursor: boolean}} props 
+   */
   #updatePrompt({ show, preserveCursor } = {}) {
     if (!this.isClosed) {
       this.#readline.setPrompt(`${currentlyIn(this.workingDirectory)}${EOL}${this.#prompt}`);
@@ -72,17 +70,16 @@ export class CLI {
     }
   }
 
-  #salutation() {
+  #salutation(extraDesc) {
     console.clear();
-    console.log(EOL, salutation(this.#username), EOL);
+    console.log(EOL, salutation(this.#username, extraDesc), EOL);
   }
 
   get isClosed() {
     return this.#closed;
   }
-
   set prompt(s) {
-    this.#prompt = s != null ? s : DefaultProps.Prompt;
+    this.#prompt = isNonEmptyStr(s) ? s : DefaultProps.Prompt;
   }
 
   set username(s) {
@@ -98,6 +95,7 @@ export class CLI {
       chdir(path);
     } catch { }
   }
+
   /**
    * @typedef {(line: string) => Promise<void> | (line: string) => void} OnLineHandler
    * @param {OnLineHandler | null} handler 
@@ -105,6 +103,7 @@ export class CLI {
   set onLine(handler) {
     this.#onLine = isFunc(handler) ? handler : null;
   }
+
   /** 
    * @typedef {() => Promise<void> | () => void} OnCloseHandler
    * @param {OnCloseHandler | null} handler 
