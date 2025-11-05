@@ -1,13 +1,9 @@
-import { styleText as style } from 'util';
-import { isArray, isFunc, isNonEmptyStr, isObj } from "../../common/utils/index.js";
+import { isArray, isFunc, isNonEmptyStr } from "../../common/utils/index.js";
 import { NESTED_CMD_PREFIX } from '../repl.constants.js';
 import { CommandList } from './cmdlist.js';
 import { showInputError, showOperationError } from './error.js';
 
 const RE_CMDLINE = /".*"|[^\s]+/g;
-const HINT = style('gray',
-  `If argument contains spaces, enclose it in double quotes (eg., cd "c:/program files")`
-);
 
 /**
  * @param {(...args: string[]) => Promise<unknown>} cmd 
@@ -15,15 +11,12 @@ const HINT = style('gray',
  * @param {string} cmdName
  */
 const evalCommand = async (cmd, args, cmdName) => {
-  if (cmd.length !== args.length) {
+  if (args.length < cmd.length) {
     showInputError(`${cmdName}: expected ${cmd.length} arg(s), got ${args.length}`);
-    // to many arguments
-    if (cmd.length && cmd.length < args.length) {
-      console.log(HINT);
-    }
     return;
   }
   try {
+    // extra ones will be ignored
     const output = await cmd(...args);
     if (output) {
       console[isArray(output) ? 'table' : 'log'](output);
@@ -58,7 +51,7 @@ export const evaluate = async (line) => {
       break;
     }
     arg = arg.slice(2);
-    cmd = cmd[arg];
+    cmd = cmd?.[arg];
     cmdPath.push(arg);
     args = args.slice(1);
     if (!cmd) {
