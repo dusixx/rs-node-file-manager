@@ -2,14 +2,14 @@ import fs from 'fs';
 import path from 'path';
 import streamPromises from 'stream/promises';
 import zlib from 'zlib';
-import { checkPath, createDir, isFileExists, removeDir, resolvePath } from './fs.js';
+import { checkPath, createDir, isFileExists, resolvePath } from './fs.js';
 import { CustomError } from './misc.js';
 
 const MethodExtensionMap = {
   BrotliCompress: '.br',
   BrotliDecompress: '',
   ZstdCompress: '.zst',
-  ZstdDecompress: '.zst',
+  ZstdDecompress: '',
   Gzip: '.gz',
   Gunzip: '',
 }
@@ -27,7 +27,7 @@ const validatePaths = async (srcFile, dstFile) => {
     throw new CustomError('no such file', srcFile);
   }
   if ((await checkPath(dstFile)).isDirectory) {
-    throw new CustomError('destination file name is not specified', dstFile);
+    throw new CustomError('destination file is not specified', dstFile);
   }
   const dstDir = path.dirname(dstFile);
   const dstInfo = await checkPath(dstDir);
@@ -44,10 +44,9 @@ const validatePaths = async (srcFile, dstFile) => {
 
 /**
  * @typedef {keyof typeof MethodExtensionMap} CompressionMethod
- * @typedef {{ method: CompressionMethod, deleteSource: boolean, appendExtension: boolean }} CompressionOptions
  * @param {string} srcFilePath
  * @param {string} dstFilePath
- * @param {CompressionOptions} options
+ * @param {{ method: CompressionMethod, deleteSource: boolean, appendExtension: boolean }} options
  */
 export const compressDecompressFile = async (srcFilePath, dstFilePath, {
   method,
@@ -59,18 +58,23 @@ export const compressDecompressFile = async (srcFilePath, dstFilePath, {
   }
   let { wasDstDirJustCreated, srcFile, dstFile, dstDir } = await validatePaths(srcFilePath, dstFilePath);
 
-  // append ext for compressed file
+  // append ext for file to be compressed only
   if (appendExtension) {
-    const ext = MethodExtensionMap[method];
-    if (path.extname(dstFile) !== ext) {
-      dstFile += ext ?? '';
-    }
+    dstFile += MethodExtensionMap[method] ?? '';
   }
-  let writeStream;
+  if (await isFileExists(dstFile)) {
+    throw new CustomError('file already exists', dstFile);
+  }
+  let wasDstFileJustCreated;
   try {
     const zlibStream = zlib[`create${method}`]();
     const readStream = fs.createReadStream(srcFile);
-    writeStream = fs.createWriteStream(dstFile, { flags: 'wx' });
+    const writeStream = fs.createWriteStream(dstFile);
+
+    // wait until dstFile is created
+    wasDstFileJustCreated = await new Promise((resolve) => {
+      writeStream.on('open', () => resolve(true));
+    });
 
     await streamPromises.pipeline(readStream, zlibStream, writeStream);
     // remove src file
@@ -78,15 +82,11 @@ export const compressDecompressFile = async (srcFilePath, dstFilePath, {
       await fs.promises.unlink(srcFile);
     }
   } catch (err) {
-    // clean up if failed
+    // clean up
     if (wasDstDirJustCreated) {
-      await removeDir(dstDir);
-    } else {
-      writeStream?.on('error', async () => {
-        if (dstFile !== srcFile) {
-          await fs.promises.unlink(dstFile);
-        }
-      });
+      await fs.promises.rm(dstDir, { recursive: true, force: true });
+    } else if (wasDstFileJustCreated) {
+      await fs.promises.unlink(dstFile);
     }
     throw err;
   }

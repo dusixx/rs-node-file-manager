@@ -39,9 +39,12 @@ const validatePaths = async (srcFile, dstDir) => {
 export const copyOrMoveFile = async (srcFilePath, dstDirPath, removeSrc = false) => {
   const { wasDstDirJustCreated, srcFile, dstFile, dstDir } = await validatePaths(srcFilePath, dstDirPath);
 
+  if (await isFileExists(dstFile)) {
+    throw new CustomError('file already exists', dstFile);
+  }
   try {
     const readStream = fs.createReadStream(srcFile);
-    const writeStream = fs.createWriteStream(dstFile, { flags: 'wx' });
+    const writeStream = fs.createWriteStream(dstFile);
 
     await streamPromises.pipeline(readStream, writeStream);
     // remove src file
