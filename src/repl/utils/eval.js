@@ -1,6 +1,6 @@
 import { isArray, isFunc, isNonEmptyStr } from "../../common/utils/index.js";
+import { CommandList } from '../commands/index.js';
 import { NESTED_CMD_PREFIX } from '../repl.constants.js';
-import { CommandList } from './cmdlist.js';
 import { showInputError, showOperationError } from './error.js';
 
 const RE_CMDLINE = /".*"|[^\s]+/g;
@@ -16,7 +16,6 @@ const evalCommand = async (cmd, args, cmdName) => {
     return;
   }
   try {
-    // extra ones will be ignored
     const output = await cmd(...args);
     if (output) {
       console[isArray(output) ? 'table' : 'log'](output);

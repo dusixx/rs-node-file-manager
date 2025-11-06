@@ -34,7 +34,6 @@ const validatePaths = async (srcFile, dstFile) => {
   if (dstInfo.isFile) {
     throw new CustomError('not a directory', dstDir);
   }
-  // create if does not exists
   if (!dstInfo.exists) {
     await createDir(dstDir);
     wasDstDirJustCreated = true;
@@ -77,7 +76,6 @@ export const compressDecompressFile = async (srcFilePath, dstFilePath, {
     });
 
     await streamPromises.pipeline(readStream, zlibStream, writeStream);
-    // remove src file
     if (deleteSource) {
       await fs.promises.unlink(srcFile);
     }

@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import streamPromises from 'stream/promises';
-import { checkPath, createDir, isFileExists, removeDir, resolvePath } from "./fs.js";
+import { checkPath, createDir, isFileExists, resolvePath } from "./fs.js";
 import { CustomError } from './misc.js';
 
 /**
@@ -20,7 +20,6 @@ const validatePaths = async (srcFile, dstDir) => {
   if (dstInfo.isFile) {
     throw new CustomError('not a directory', dstDir);
   }
-  // create if does not exists
   if (!dstInfo.exists) {
     await createDir(dstDir);
     wasDstDirJustCreated = true;
@@ -47,14 +46,13 @@ export const copyOrMoveFile = async (srcFilePath, dstDirPath, removeSrc = false)
     const writeStream = fs.createWriteStream(dstFile);
 
     await streamPromises.pipeline(readStream, writeStream);
-    // remove src file
     if (removeSrc) {
       await fs.promises.unlink(srcFile);
     }
   } catch (err) {
-    // clean up if failed
+    // clean up
     if (wasDstDirJustCreated) {
-      await removeDir(dstDir);
+      await fs.promises.rm(dstDir, { recursive: true, force: true });
     }
     throw err;
   }

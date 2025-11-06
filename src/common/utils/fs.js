@@ -185,7 +185,7 @@ export const getCurrentDirItems = async () => {
     const item = { name: ent.name, type: getDirentType(ent) }
     if (ent.isDirectory()) {
       dirs.push(item);
-    } else if (ent.isFile()) {
+    } else {
       files.push(item);
     }
   }

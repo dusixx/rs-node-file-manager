@@ -44,26 +44,25 @@ export const buildUsage = (cmdList, cmdDescList) => {
 
   walk(cmdList);
 
-  function walk(cmdList, cmdPath = []) {
+  function walk(cmdList, cmdStack = []) {
     for (const [cmdName, cmdValue] of Object.entries(cmdList)) {
       // special or invalid cmd
       if (cmdName.startsWith('.') || !isValidCmd(cmdName, cmdValue)) {
         continue;
       }
-      cmdPath.push(cmdName);
+      cmdStack.push(cmdName);
 
       if (isObj(cmdValue)) {
-        walk(cmdValue, cmdPath);
+        walk(cmdValue, cmdStack);
       } else {
-        const nestedCmdName = cmdPath.join(` ${NESTED_CMD_PREFIX}`);
-        const signature = getCmdFuncSignature(nestedCmdName, cmdValue);
-        const usage = { usage: signature };
+        const nestedCmdName = cmdStack.join(` ${NESTED_CMD_PREFIX}`);
+        const usage = { usage: getCmdFuncSignature(nestedCmdName, cmdValue) };
         if (wasDescSpecified) {
-          usage.desc = getCmdDesc(cmdDescList, cmdPath);
+          usage.desc = getCmdDesc(cmdDescList, cmdStack);
         }
         result.push(usage);
       }
-      cmdPath.pop();
+      cmdStack.pop();
     }
   }
   return result;

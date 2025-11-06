@@ -1,4 +1,5 @@
 export const NESTED_CMD_PREFIX = '--';
+export const HOMEDIR_PATH_ALIAS = '~';
 export const EXIT_CMD = '.exit';
 export const HELP_CMD = '.help';
 
@@ -26,7 +27,7 @@ export const CommandDescList = {
     cpus: 'show logical CPU cores info',
     test: {
       test: {
-        test: 'test test test'
+        test: 'test'
       }
     },
   }
