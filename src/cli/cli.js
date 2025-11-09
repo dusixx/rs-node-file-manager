@@ -1,0 +1,114 @@
+import { EOL } from "os";
+import { chdir, cwd, stdin, stdout } from "process";
+import readline from "readline";
+import { isFunc, isNonEmptyStr } from "../common/utils/index.js";
+import { currentlyIn, DefaultProps, farewell, salutation } from "./cli.utils.js";
+
+export class CLI {
+  static #instance;
+  /** @type {readline.Interface} */
+  #readline;
+  #username;
+  #prompt;
+  #onLine;
+  #onClose;
+  #closed = true;
+
+  constructor({ username, prompt, workingDir = DefaultProps.WorkingDir } = {}) {
+    if (CLI.#instance) {
+      return CLI.#instance;
+    }
+    this.username = username;
+    this.prompt = prompt;
+    this.workingDirectory = workingDir;
+    CLI.#instance = this;
+  }
+
+  run(extraDesc) {
+    const rl = this.#readline = readline.createInterface({
+      input: stdin,
+      output: stdout
+    });
+    this.#closed = false;
+    this.#salutation(extraDesc);
+    this.#updatePrompt({ show: true });
+
+    rl.on("line", async (line) => {
+      const trimmed = line.trim();
+
+      await this.#onLine?.(trimmed);
+      if (this.isClosed) {
+        return;
+      }
+      console.log();
+      this.#updatePrompt({ show: true });
+    })
+      .on('SIGINT', () => {
+        console.log(`^C`);
+        rl.close();
+      })
+      .on("close", () => {
+        console.log(EOL, farewell(this.#username));
+        this.#onClose?.();
+        this.#closed = true;
+      });
+  }
+
+  close() {
+    this.#readline.close();
+  }
+
+  /**
+   * @param {{show: boolean, preserveCursor: boolean}} props 
+   */
+  #updatePrompt({ show, preserveCursor } = {}) {
+    if (!this.isClosed) {
+      this.#readline.setPrompt(`${currentlyIn(this.workingDirectory)}${EOL}${this.#prompt}`);
+      if (show) {
+        this.#readline.prompt(preserveCursor);
+      }
+    }
+  }
+
+  #salutation(extraDesc) {
+    console.clear();
+    console.log(EOL, salutation(this.#username, extraDesc), EOL);
+  }
+
+  get isClosed() {
+    return this.#closed;
+  }
+  set prompt(s) {
+    this.#prompt = isNonEmptyStr(s) ? s : DefaultProps.Prompt;
+  }
+
+  set username(s) {
+    this.#username = isNonEmptyStr(s) ? s : DefaultProps.Username;
+  }
+
+  get workingDirectory() {
+    return cwd();
+  }
+
+  set workingDirectory(path) {
+    try {
+      chdir(path);
+    } catch { }
+  }
+
+  /**
+   * @typedef {(line: string) => Promise<void> | (line: string) => void} OnLineHandler
+   * @param {OnLineHandler | null} handler 
+   */
+  set onLine(handler) {
+    this.#onLine = isFunc(handler) ? handler : null;
+  }
+
+  /** 
+   * @typedef {() => Promise<void> | () => void} OnCloseHandler
+   * @param {OnCloseHandler | null} handler 
+   */
+  set onClose(handler) {
+    this.#onClose = isFunc(handler) ? handler : null;
+  }
+}
